@@ -7,22 +7,28 @@
 
 namespace optox
 {
-
+/**
+ * @class SplineActOperator
+ * @brief Activation operator based on B-splines 
+ */
 template <typename T>
 class OPTOX_DLLAPI SplineActOperator : public IActOperator<T>
 {
   public:
-    /** Constructor */
+    /** Constructor. */
     SplineActOperator(T vmin, T vmax) : IActOperator<T>(vmin, vmax)
     {
     }
 
-    /** Destructor */
+    /** Destructor. */
     virtual ~SplineActOperator()
     {
     }
 
+    /** No copies are allowed. */
     SplineActOperator(SplineActOperator const &) = delete;
+
+    /** No assignments are allowed. */
     void operator=(SplineActOperator const &) = delete;
 
   protected:

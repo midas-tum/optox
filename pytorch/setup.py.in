@@ -22,16 +22,21 @@ add_module("demosaicing")
 add_module("rot")
 add_module("warp")
 add_module("pad")
+add_module("averagepooling")
+add_module("maxpooling")
+add_module("scale")
 
 setup(
     name='optoth',
-    version='0.2.0',
-    author="Erich Kobler",
-    author_email="erich.kobler@icg.tugraz.at",
+    version='0.3.0',
+    author="Erich Kobler, Kerstin Hammernik, Thomas Kuestner",
+    author_email="erich.kobler@icg.tugraz.at, k.hammernik@imperial.ac.uk, thomas.kuestner@med.uni-tuebingen.de",
     packages=["optoth", 
-              "optoth.activations",],
+              "optoth.activations",
+              "optoth.test"],
     package_dir={"optoth": os.path.join("${CMAKE_CURRENT_SOURCE_DIR}", "optoth"),
-                 "optoth.activations": os.path.join("${CMAKE_CURRENT_SOURCE_DIR}", "optoth", "activations")},
+                 "optoth.activations": os.path.join("${CMAKE_CURRENT_SOURCE_DIR}", "optoth", "activations"),
+                 "optoth.test": os.path.join("${CMAKE_CURRENT_SOURCE_DIR}", "optoth", "test")},
     include_dirs=[],
     ext_package="_ext",
     ext_modules=EXT_MODULES,

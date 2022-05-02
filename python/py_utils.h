@@ -15,6 +15,31 @@
 
 namespace py = pybind11;
 
+namespace optox{
+template<typename PixelType>
+struct OPTOX_DLLAPI numpy {};
+
+template<> struct OPTOX_DLLAPI numpy<float2>
+{
+    typedef std::complex<float> type;
+};
+
+template<> struct OPTOX_DLLAPI numpy<double2>
+{
+    typedef std::complex<double> type;
+};
+
+template<> struct OPTOX_DLLAPI numpy<float>
+{
+    typedef float type;
+};
+
+template<> struct OPTOX_DLLAPI numpy<double>
+{
+    typedef double type;
+};
+}
+
 template <typename T, unsigned int N>
 std::unique_ptr<optox::DTensor<T, N>> getDTensorNp(py::array &array)
 {
@@ -23,9 +48,9 @@ std::unique_ptr<optox::DTensor<T, N>> getDTensorNp(py::array &array)
                                  " but got " + std::to_string(array.ndim()) + "!");
 
     py::buffer_info info = array.request();
-    if (info.format != py::format_descriptor<T>::format())
+    if (info.format != py::format_descriptor<typename optox::numpy<T>::type>::format())
         throw std::runtime_error("invalid tensor dtype. expected " +
-                                 py::format_descriptor<T>::format() + " but got " +
+                                 py::format_descriptor<typename optox::numpy<T>::type>::format() + " but got " +
                                  info.format + "!");
 
     // wrap the Tensor into a device tensor
@@ -85,7 +110,7 @@ py::array dTensorToNp(const optox::DTensor<T, N> &d_tensor)
     return py::array(py::buffer_info(
         h_tensor.ptr(),
         sizeof(T),
-        py::format_descriptor<T>::format(),
+        py::format_descriptor<typename optox::numpy<T>::type>::format(),
         ndim,
         shape,
         strides));

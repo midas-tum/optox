@@ -10,35 +10,41 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
 template<typename T>
-py::array forward(optox::WarpOperator<T> &op, py::array np_x, py::array np_u)
+std::vector<py::array> forward(optox::WarpOperator<T> &op, py::array np_grad_out, py::array np_u, py::array np_x)
 {
     // parse the input tensors
     auto x = getDTensorNp<T, 4>(np_x);
     auto u = getDTensorNp<T, 4>(np_u);
-    
+    auto grad_out = getDTensorNp<T, 4>(np_grad_out);
+
     // allocate output tensor
     optox::DTensor<T, 4> output(x->size());
-    op.forward({&output}, {x.get(), u.get()});
-    return dTensorToNp<T, 4>(output);
+    optox::DTensor<T, 4> grad_u(u->size());
+
+    op.forward({&output, &grad_u}, {grad_out.get(), u.get(), x.get()});
+    return {dTensorToNp<T, 4>(output), dTensorToNp<T, 4>(grad_u)};
 }
 
 template<typename T>
-py::array adjoint(optox::WarpOperator<T> &op, py::array np_grad_out, py::array np_u)
+std::vector<py::array> adjoint(optox::WarpOperator<T> &op, py::array np_grad_out, py::array np_u, py::array np_x)
 {
     // parse the input tensors
     auto grad_out = getDTensorNp<T, 4>(np_grad_out);
     auto u = getDTensorNp<T, 4>(np_u);
+    auto x = getDTensorNp<T, 4>(np_x);
 
     // allocate the output tensor
     optox::DTensor<T, 4> grad_x(grad_out->size());
-    
-    op.adjoint({&grad_x}, {grad_out.get(), u.get()});
+    optox::DTensor<T, 4> grad_u(u->size());
 
-    return dTensorToNp<T, 4>(grad_x);
+    op.adjoint({&grad_x, &grad_u}, {grad_out.get(), u.get(), x.get()});
+
+    return {dTensorToNp<T, 4>(grad_x), dTensorToNp<T, 4>(grad_u)};
 }
 
 template<typename T>
@@ -46,7 +52,7 @@ void declare_op(py::module &m, const std::string &typestr)
 {
     std::string pyclass_name = std::string("Warp_2d_") + typestr;
     py::class_<optox::WarpOperator<T>>(m, pyclass_name.c_str(), py::buffer_protocol(), py::dynamic_attr())
-    .def(py::init<>())
+    .def(py::init<const std::string&>())
     .def("forward", forward<T>) 
     .def("adjoint", adjoint<T>);
 }

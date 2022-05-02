@@ -1,4 +1,4 @@
-///@file th_nabla_operator.h
+///@file th_nabla_operator.cpp
 ///@brief PyTorch wrappers for nabla operator
 ///@author Erich Kobler <erich.kobler@icg.tugraz.at>
 ///@date 02.2019

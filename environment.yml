@@ -1,7 +1,6 @@
 name: optox
 channels:
   - conda-forge
-  - nvidia
 dependencies:
   - python=3.6
   - cmake=3.12
@@ -12,6 +11,6 @@ dependencies:
   - six
   - wheel
   - pip
-  - cudatoolkit=11.1
+  - cudatoolkit=11.0
   - pip:
     - -r requirements.txt

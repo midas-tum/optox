@@ -23,18 +23,26 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 # CUDA
 ##-----------------------------------------------------------------------------
 find_package(CUDA 5.0 REQUIRED)
-
 cuda_include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CUDA_INCLUDE_DIRS})
-
-set(CUDA_SDK_ROOT_DIR $ENV{CUDA_SDK_ROOT_DIR}/common/inc)
+if(NOT DEFINED $ENV{CUDA_SDK_ROOT_DIR})
+  message(STATUS, "cuda sdk not set")
+  set(CUDA_SDK_ROOT_DIR ${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc)
+else()
+  set(CUDA_SDK_ROOT_DIR $ENV{CUDA_SDK_ROOT_DIR}/common/inc)
+endif(NOT DEFINED $ENV{CUDA_SDK_ROOT_DIR})
 cuda_include_directories(${CUDA_SDK_ROOT_DIR})
 include_directories(${CUDA_SDK_ROOT_DIR})
+
+message(STATUS "CUDA_TOOLKIT_ROOT_DIR: ${CUDA_TOOLKIT_ROOT_DIR}")
+message(STATUS "CUDA_SDK_ROOT_DIR: ${CUDA_SDK_ROOT_DIR}")
 
 ##-----------------------------------------------------------------------------
 # Compiler flags
 ##-----------------------------------------------------------------------------
 include(${CMAKE_CURRENT_LIST_DIR}/settings.cmake)
+set(ENV{LDFLAGS} -L${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+message(STATUS "LDFLAGS = $ENV{LDFLAGS}")
 
 ##-----------------------------------------------------------------------------
 ## sources
@@ -53,7 +61,7 @@ message(STATUS "optox library dir: ${OPTOX_LIBRARY_DIR}")
 ##-----------------------------------------------------------------------------
 ## interfaces
 ##-----------------------------------------------------------------------------
-option(WITH_PYTHON "Use Python - build python interface. Requires numpy, pybind11" OFF)
+option(WITH_PYTHON "Use Python - build python interface. Requires numpy, pybind11" ON)
 if(WITH_PYTHON)
     message(STATUS "[+] optox build python interfaces")
     add_subdirectory(python)
@@ -61,7 +69,7 @@ else(WITH_PYTHON)
     message(STATUS "[-] optox exclude python interfaces")
 endif(WITH_PYTHON)
 
-option(WITH_TENSORFLOW "Use Tensorflow - build tensorflow interface. Requires tensorflow" OFF)
+option(WITH_TENSORFLOW "Use Tensorflow - build tensorflow interface. Requires tensorflow" ON)
 if(WITH_TENSORFLOW)
     message(STATUS "[+] optox build tensorflow interfaces")
     add_subdirectory(tensorflow)
@@ -78,3 +86,24 @@ else(WITH_PYTORCH)
 endif(WITH_PYTORCH)
 
 enable_testing()
+
+# look for Doxygen package
+find_package(Doxygen)
+if (DOXYGEN_FOUND)
+    # set input and output files
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}//Doxyfile.in)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.out)
+
+    # request to configure the file
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+    message("Doxygen build started")
+
+    # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
+    add_custom_target( docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM )
+else (DOXYGEN_FOUND)
+  message("Doxygen needs to be installed to generate the doxygen documentation")
+endif (DOXYGEN_FOUND)

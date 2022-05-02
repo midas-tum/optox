@@ -14,6 +14,31 @@
 #define CHECK_NOT_CUDA(x) AT_ASSERTM(tensor.device().type() != torch::kCUDA, #x " must be a CPU tensor")
 #define CHECK_CONTIGUOUS(x) AT_ASSERTM(x.is_contiguous(), #x " must be contiguous")
 
+namespace optox{
+template<typename PixelType>
+struct OPTOX_DLLAPI torch {};
+
+template<> struct OPTOX_DLLAPI torch<float2>
+{
+    typedef c10::complex<float> type;
+};
+
+template<> struct OPTOX_DLLAPI torch<double2>
+{
+    typedef c10::complex<double> type;
+};
+
+template<> struct OPTOX_DLLAPI torch<float>
+{
+    typedef float type;
+};
+
+template<> struct OPTOX_DLLAPI torch<double>
+{
+    typedef double type;
+};
+}
+
 // wrappers for iu
 template <typename T, unsigned int N>
 std::unique_ptr<optox::DTensor<T, N>> getDTensorTorch(at::Tensor tensor)
@@ -28,7 +53,7 @@ std::unique_ptr<optox::DTensor<T, N>> getDTensorTorch(at::Tensor tensor)
     optox::Shape<N> size;
     for (unsigned int i = 0; i < N; ++i)
         size[i] = tensor.size(i);
-    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(tensor.data_ptr<T>(), size, true));
+    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(reinterpret_cast<T*>(tensor.data_ptr<typename optox::torch<T>::type>()), size, true));
 
     return p;
 }
@@ -46,7 +71,7 @@ std::unique_ptr<optox::DTensor<T, N>> getComplexDTensorTorch(at::Tensor tensor)
     optox::Shape<N> size;
     for (unsigned int i = 0; i < N; ++i)
         size[i] = tensor.size(i);
-    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(reinterpret_cast<T*>(tensor.data<typename optox::type_trait<T>::real_type>()), size, true));
+    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(reinterpret_cast<T*>(tensor.data_ptr<typename optox::type_trait<T>::real_type>()), size, true));
 
     // do not return a copy but rather move its value
     return move(p);
@@ -65,7 +90,7 @@ std::unique_ptr<optox::HTensor<T, N>> getHTensorTorch(at::Tensor tensor)
     optox::Shape<N> size;
     for (unsigned int i = 0; i < N; ++i)
         size[i] = tensor.size(i);
-    std::unique_ptr<optox::HTensor<T, N>> p(new optox::HTensor<T, N>(tensor.data_ptr<T>(), size, true));
+    std::unique_ptr<optox::HTensor<T, N>> p(new optox::HTensor<T, N>(reinterpret_cast<T*>(tensor.data_ptr<typename optox::torch<T>::type>()), size, true));
 
     return p;
 }

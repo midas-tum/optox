@@ -21,6 +21,9 @@
 
 #include <cuda.h>
 
+/** \addtogroup Core 
+ *  @{
+ */
 namespace optox
 {
 
@@ -28,8 +31,10 @@ typedef std::vector<const ITensor *> OperatorInputVector;
 typedef std::vector<ITensor *> OperatorOutputVector;
 
 /**
- * Interface for operators
- *  It defines 
+ * \class IOperator
+ * \brief Interface for operators
+ * 
+ *  `IOperator` defines 
  *      - the common functions that *all* operators must implement.
  *      - auxiliary helper functions
  */
@@ -37,18 +42,20 @@ typedef std::vector<ITensor *> OperatorOutputVector;
 class OPTOX_DLLAPI IOperator
 {
   public:
+    /** Constructor. */
     IOperator() : stream_(cudaStreamDefault)
     {
     }
 
+    /** Destructor. */
     virtual ~IOperator()
     {
     }
 
-    /** apply the operators
-     * \outputs list of the operator outputs `{&out_1, ...}` which are
+    /** Apply the operator's forward.
+     * @param outputs list of the operator's forward outputs `{&out_1, ...}` which are
      *          typically of type `DTensor`
-     * \inputs list of the operator inputs `{&in_1, ...}` which are
+     * @param inputs list of the operator's forward inputs `{&in_1, ...}` which are
      *         typically of type `DTensor`
      */
     void forward(std::initializer_list<ITensor *> outputs,
@@ -63,10 +70,10 @@ class OPTOX_DLLAPI IOperator
         computeForward(OperatorOutputVector(outputs), OperatorInputVector(inputs));
     }
 
-    /** apply the operator's adjoint
-     * \outputs list of the operator adjoint outputs `{&out_1, ...}` which are
+    /** Apply the operator's adjoint.
+     * @param outputs list of the operator's adjoint outputs `{&out_1, ...}` which are
      *          typically of type `DTensor`
-     * \inputs list of the operator adjoint inputs `{&in_1, ...}` which are
+     * @param inputs list of the operator's adjoint inputs `{&in_1, ...}` which are
      *         typically of type `DTensor`
      */
     void adjoint(std::initializer_list<ITensor *> outputs,
@@ -81,6 +88,10 @@ class OPTOX_DLLAPI IOperator
         computeAdjoint(OperatorOutputVector(outputs), OperatorInputVector(inputs));
     }
 
+    /** Get the input `DTensor` at given `index`.
+     * @param index Index of input tensor in `inputs` to return
+     * @param inputs Vector of input tensors
+     */
     template <typename T, unsigned int N>
     const DTensor<T, N> *getInput(unsigned int index, const OperatorInputVector &inputs)
     {
@@ -96,6 +107,10 @@ class OPTOX_DLLAPI IOperator
             THROW_OPTOXEXCEPTION("input index out of bounds!");
     }
 
+    /** Get the output `DTensor` at given `index`.
+     * @param index Index of output tensor in `outputs` to return
+     * @param outputs Vector of output tensors
+     */
     template <typename T, unsigned int N>
     DTensor<T, N> *getOutput(unsigned int index, const OperatorOutputVector &outputs)
     {
@@ -111,11 +126,17 @@ class OPTOX_DLLAPI IOperator
             THROW_OPTOXEXCEPTION("output index out of bounds!");
     }
 
+    /** Set CUDA stream that should be used to call the CUDA kernels.
+     * @param stream CUDA stream
+    */
     void setStream(const cudaStream_t &stream)
     {
         stream_ = stream;
     }
 
+    /** Get CUDA stream that is used to call the CUDA kernels.
+     * @return CUDA stream
+     */
     cudaStream_t getStream() const
     {
         return stream_;
@@ -128,38 +149,51 @@ class OPTOX_DLLAPI IOperator
     void operator=(IOperator const &) = delete;
 
   protected:
-    /** actual implementation of the forward operator
-     * \outputs outputs that are computed by the forward op
-     * \inputs inputs that are required to compute
+    /** Actual implementation of the forward operator.
+     * @param outputs Vector of outputs that are computed by the forward operator
+     * @param inputs Vector of inputs that are required to compute
      */
     virtual void computeForward(OperatorOutputVector &&outputs,
                                 const OperatorInputVector &inputs) = 0;
 
-    /** actual implementation of the adjoint operator
-     * \outputs outputs that are computed by the forward op
-     * \inputs inputs that are required to compute
+    /** Actual implementation of the adjoint operator.
+     * @param outputs Vector of outputs that are computed by the forward operator
+     * @param inputs Vector of inputs that are required to compute
      */
     virtual void computeAdjoint(OperatorOutputVector &&outputs,
                                 const OperatorInputVector &inputs) = 0;
 
-    /** Number of rquired outputs for the forward op */
+    /** Number of required outputs for the forward operator.
+     * @return Number of outputs for forward operator
+    */
     virtual unsigned int getNumOutputsForward() = 0;
-    /** Number of rquired inputs for the forward op */
+    /** Number of required inputs for the forward operator.
+     * @return Number of inputs for forward operator
+    */
     virtual unsigned int getNumInputsForward() = 0;
 
-    /** Number of rquired outputs for the adjoint op */
+    /** Number of required outputs for the adjoint operator.
+     * @return Number of outputs for adjoint operator
+    */
     virtual unsigned int getNumOutputsAdjoint() = 0;
-    /** Number of rquired inputs for the adjoint op */
+    /** Number of required inputs for the adjoint operator.
+     * @return Number of inputs for adjoint operator
+    */
     virtual unsigned int getNumInputsAdjoint() = 0;
 
   protected:
+    /** CUDA stream to be used to call the CUDA kernels. */
     cudaStream_t stream_;
 };
 
 #define OPTOX_CALL_float(m) m(float)
 #define OPTOX_CALL_double(m) m(double)
+#define OPTOX_CALL_float2(m) m(float2)
+#define OPTOX_CALL_double2(m) m(double2)
 
 #define OPTOX_CALL_REAL_NUMBER_TYPES(m) \
     OPTOX_CALL_float(m) OPTOX_CALL_double(m)
-
+#define OPTOX_CALL_NUMBER_TYPES(m) \
+    OPTOX_CALL_float(m) OPTOX_CALL_double(m) OPTOX_CALL_float2(m) OPTOX_CALL_double2(m)
 } // namespace optox
+/** @}*/ // End of Doxygen group Core

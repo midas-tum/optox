@@ -1,10 +1,13 @@
-import numpy as np
 import torch
-import unittest
 
 import _ext.th_nabla_operator
 
-__all__ = ['float_2d', 'double_2d', 'float_3d', 'double_3d', 'float_4d', 'double_4d']
+__all__ = ['float_2d',
+           'double_2d',
+           'float_3d',
+           'double_3d',
+           'float_4d',
+           'double_4d']
 
 float_2d = _ext.th_nabla_operator.Nabla2_2d_float
 double_2d = _ext.th_nabla_operator.Nabla2_2d_double
@@ -15,11 +18,16 @@ double_3d = _ext.th_nabla_operator.Nabla2_3d_double
 float_4d = _ext.th_nabla_operator.Nabla2_4d_float
 double_4d = _ext.th_nabla_operator.Nabla2_4d_double
 
-# to run execute: python -m unittest [-v] optoth.nabla2
-class TestNabla2Function(unittest.TestCase):
-    
-    def _get_nabla_op(self, dtype, dim):
-        if dtype == torch.float32:
+class Nabla2(torch.nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.dim = dim
+
+    def _get_op(self, dtype, dim):
+        assert dtype in [torch.float32, torch.complex64, torch.float64, torch.complex128]
+        is_double = dtype in [torch.float64, torch.complex128]
+
+        if not is_double:
             if dim == 2:
                 return float_2d()
             elif dim == 3:
@@ -28,7 +36,7 @@ class TestNabla2Function(unittest.TestCase):
                 return float_4d()
             else:
                 raise RuntimeError('Invalid number of dimensions!')
-        elif dtype == torch.float64:
+        else:
             if dim == 2:
                 return double_2d()
             elif dim == 3:
@@ -37,46 +45,25 @@ class TestNabla2Function(unittest.TestCase):
                 return double_4d()
             else:
                 raise RuntimeError('Invalid number of dimensions!')
+
+    def forward(self, x):
+        op = self._get_op(x.dtype, self.dim)
+        
+        if x.is_complex():
+            out_re = op.forward(torch.real(x).contiguous())
+            out_im = op.forward(torch.imag(x).contiguous())
+            out = torch.complex(out_re, out_im)
         else:
-            raise RuntimeError('Invalid dtype!')
-            
-    def _test_adjointness(self, dtype, dim):
-        # get the corresponding operator
-        op = self._get_nabla_op(dtype, dim)
-        # setup the vaiables
-        cuda = torch.device('cuda')
-        shape = [dim,] + [30 for i in range(dim)]
-        th_x = torch.randn(*shape, dtype=dtype, device=cuda)
-        shape[0] = dim**2
-        th_p = torch.randn(*shape, dtype=dtype, device=cuda)
+            out = op.forward(x)
+        return out
 
-        th_nabla_x = op.forward(th_x)
-        th_nablaT_p = op.adjoint(th_p)
-
-        lhs = (th_nabla_x * th_p).sum().cpu().numpy()
-        rhs = (th_x * th_nablaT_p).sum().cpu().numpy()
-
-        print('dtype: {} dim: {} diff: {}'.format(dtype, dim, np.abs(lhs - rhs)))
-        self.assertTrue(np.abs(lhs - rhs) < 1e-3)
-
-    def test_float2_gradient(self):
-        self._test_adjointness(torch.float32, 2)
-
-    def test_float3_gradient(self):
-        self._test_adjointness(torch.float32, 3)
-
-    def test_float4_gradient(self):
-        self._test_adjointness(torch.float32, 4)
-
-    def test_double2_gradient(self):
-        self._test_adjointness(torch.float64, 2)
-
-    def test_double3_gradient(self):
-        self._test_adjointness(torch.float64, 3)
-
-    def test_double4_gradient(self):
-        self._test_adjointness(torch.float64, 4)
-
-
-if __name__ == "__main__":
-    unittest.test()
+    def adjoint(self, x):
+        op = self._get_op(x.dtype, self.dim)
+        
+        if x.is_complex():
+            out_re = op.adjoint(torch.real(x).contiguous())
+            out_im = op.adjoint(torch.imag(x).contiguous())
+            out = torch.complex(out_re, out_im)
+        else:
+            out = op.adjoint(x)
+        return out

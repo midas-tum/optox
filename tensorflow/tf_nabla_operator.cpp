@@ -1,5 +1,5 @@
-///@file th_nabla_operator.h
-///@brief PyTorch wrappers for nabla operator
+///@file tf_nabla_operator.cpp
+///@brief tensorflow wrappers for nabla operator
 ///@author Erich Kobler <erich.kobler@icg.tugraz.at>
 ///@date 02.2019
 

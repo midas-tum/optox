@@ -1,4 +1,4 @@
-///@file th_act_operator.h
+///@file th_act_operator.cpp
 ///@brief PyTorch wrappers for activation functions
 ///@author Erich Kobler <erich.kobler@icg.tugraz.at>
 ///@date 01.2019

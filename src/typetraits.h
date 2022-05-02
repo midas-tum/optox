@@ -8,15 +8,16 @@
 #include "optox_api.h"
 #include <cmath>
 #include <helper_math.h>
+#include <complex>
 
 namespace optox {
-/** Wrapper class for vector types like float2, double2 to allow
- * more efficient templating especially for fft/ifft methods.
+/** Wrapper class for vector types like float2, double2 to allow for
+ * more efficient templating when complex numbers are involved.
  */
 template<typename PixelType>
 struct OPTOX_DLLAPI type_trait {};
 
-/** Wrapper class for float2 to allow more efficient templating. */
+/** Wrapper class for float2 to allow for more efficient templating. */
 template<> struct OPTOX_DLLAPI type_trait<float2>
 {
   /** Make float2 from a single float value. */
@@ -50,6 +51,9 @@ template<> struct OPTOX_DLLAPI type_trait<float2>
 
   /** Return if PixelType is complex. */
   struct is_complex { static const bool value = true; };
+
+  /** Return if PixelType is real. */
+  struct is_real { static const bool value = false; };
 
   /** Return type name. */
   static const char* name()
@@ -92,6 +96,9 @@ template<> struct OPTOX_DLLAPI type_trait<double2>
 
   /** Return if PixelType is complex. */
   struct is_complex { static const bool value = true; };
+
+  /** Return if PixelType is real. */
+  struct is_real { static const bool value = false; };
 
   /** Return type name. */
   static inline const char* name()
@@ -140,6 +147,9 @@ template<> struct OPTOX_DLLAPI type_trait<float>
 
   /** Return if PixelType is complex. */
   struct is_complex { static const bool value = false; };
+
+  /** Return if PixelType is real. */
+  struct is_real { static const bool value = true; };
 
   /** Return type name. */
   static const char* name()
@@ -190,14 +200,15 @@ template<> struct OPTOX_DLLAPI type_trait<double>
   /** Return if PixelType is complex. */
   struct is_complex { static const bool value = true; };
 
+  /** Return if PixelType is real. */
+  struct is_real { static const bool value = true; };
+
   /** Return type name. */
   static const char* name()
   {
       return "double";
   }
 };
-
-}
 
 /** Complex multiplication. */
 template<typename PixelType>
@@ -232,4 +243,5 @@ OPTOX_DLLAPI inline __host__ __device__ typename optox::type_trait<PixelType>::c
   dst.x = src.x;
   dst.y = -src.y;
   return dst;
+}
 }

@@ -1,4 +1,4 @@
-///@file th_rot_operator.h
+///@file th_rot_operator.cpp
 ///@brief PyTorch wrappers for rotation operators
 ///@author Erich Kobler <erich.kobler@icg.tugraz.at>
 ///@date 06.2019

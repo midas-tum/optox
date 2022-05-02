@@ -1,5 +1,5 @@
-///@file th_pad2d_operator.h
-///@brief PyTorch wrappers for pad2d operator
+///@file th_pad2d_operator.cpp
+///@brief PyTorch wrappers for pad operator
 ///@author Erich Kobler <erich.kobler@icg.tugraz.at>
 ///@date 01.2020
 
@@ -11,6 +11,44 @@
 #include <torch/extension.h>
 #include <pybind11/pybind11.h>
 
+
+template<typename T>
+at::Tensor forward1d(optox::Pad1dOperator<T> &op, at::Tensor th_x)
+{
+    // parse the tensors
+    auto x = getDTensorTorch<T, 2>(th_x);
+
+    // allocate the output tensor
+    auto in_shape = th_x.sizes().vec();
+    std::vector<int64_t> shape;
+    shape.push_back(in_shape[0]);
+    shape.push_back(in_shape[1]+op.paddingX());
+    auto th_out = at::empty(shape, th_x.options());
+    auto out = getDTensorTorch<T, 2>(th_out);
+
+    op.forward({out.get()}, {x.get()});
+
+    return th_out;
+}
+
+template<typename T>
+at::Tensor adjoint1d(optox::Pad1dOperator<T> &op, at::Tensor th_grad_out)
+{
+    // parse the tensors
+    auto grad_out = getDTensorTorch<T, 2>(th_grad_out);
+
+    // allocate the output tensor
+    auto in_shape = th_grad_out.sizes().vec();
+    std::vector<int64_t> shape;
+    shape.push_back(in_shape[0]);
+    shape.push_back(in_shape[1]-op.paddingX());
+    auto th_grad_x = at::empty(shape, th_grad_out.options());
+    auto grad_x = getDTensorTorch<T, 2>(th_grad_x);
+
+    op.adjoint({grad_x.get()}, {grad_out.get()});
+
+    return th_grad_x;
+}
 
 template<typename T>
 at::Tensor forward2d(optox::Pad2dOperator<T> &op, at::Tensor th_x)
@@ -99,14 +137,20 @@ at::Tensor adjoint3d(optox::Pad3dOperator<T> &op, at::Tensor th_grad_out)
 template<typename T>
 void declare_op(py::module &m, const std::string &typestr)
 {
-    std::string pyclass_name = std::string("Pad2d_") + typestr;
+    std::string pyclass_name = std::string("Pad1d_") + typestr;
+    py::class_<optox::Pad1dOperator<T>>(m, pyclass_name.c_str(), py::buffer_protocol(), py::dynamic_attr())
+    .def(py::init<int,int,const std::string&>())
+    .def("forward", forward1d<T>)
+    .def("adjoint", adjoint1d<T>);
+
+    pyclass_name = std::string("Pad2d_") + typestr;
     py::class_<optox::Pad2dOperator<T>>(m, pyclass_name.c_str(), py::buffer_protocol(), py::dynamic_attr())
     .def(py::init<int,int,int,int,const std::string&>())
     .def("forward", forward2d<T>)
     .def("adjoint", adjoint2d<T>);
 
-    std::string pyclass_name_3d = std::string("Pad3d_") + typestr;
-    py::class_<optox::Pad3dOperator<T>>(m, pyclass_name_3d.c_str(), py::buffer_protocol(), py::dynamic_attr())
+   pyclass_name = std::string("Pad3d_") + typestr;
+    py::class_<optox::Pad3dOperator<T>>(m, pyclass_name.c_str(), py::buffer_protocol(), py::dynamic_attr())
     .def(py::init<int,int,int,int,int,int,const std::string&>())
     .def("forward", forward3d<T>)
     .def("adjoint", adjoint3d<T>);

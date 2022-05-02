@@ -23,7 +23,10 @@ set(OPERATOR_HEADER
     operators/rot_operator.h
     operators/warp_operator.h
     operators/pad_operator.h
+    operators/maxpooling_operator.h
+    operators/averagepooling_operator.h
     operators/demosaicing_operator.h
+    operators/scale_operator.h
 )
 
 set(OPERATOR_SOURCE
@@ -35,7 +38,10 @@ set(OPERATOR_SOURCE
     operators/rot_operator.cu
     operators/warp_operator.cu
     operators/pad_operator.cu
+    operators/maxpooling_operator.cu
+    operators/averagepooling_operator.cu
     operators/demosaicing_operator.cu
+    operators/scale_operator.cu
 )
 
 set(HEADERS

@@ -40,7 +40,7 @@ class Demosaicing(nn.Module):
 
     def forward(self, x):
         # first reshape the input
-        x = x.permute(0, 2, 3, 1).contiguous()
+        x_r = x.permute(0, 2, 3, 1).contiguous()
         # compute the output
         x = self.op.apply(x_r, self.bayer_pattern)
         return x.transpose_(0, 3, 1, 2)

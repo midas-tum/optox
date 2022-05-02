@@ -1,3 +1,8 @@
+///@file tf_activations_operator.cpp
+///@brief Tensorflow wrappers for activation functions
+///@author Kerstin Hammernik <k.hammernik@imperial.ac.uk>
+///@date 01.2020
+
 #include "tf_utils.h"
 
 #include "operators/activations/act.h"

@@ -31,8 +31,11 @@ class BinaryDistribution(Distribution):
         return True
 
 # define package data
-PACKAGES = ["optotf", "optotf.keras"]
-PACKAGE_DIR = {"optotf": "./optotf", "optotf.keras": "./optotf/keras"}
+PACKAGES = ["optotf", "optotf.keras", "optotf.test"]
+PACKAGE_DIR = {"optotf": "./optotf", 
+               "optotf.keras": "./optotf/keras",
+               "optotf.test" : "./optotf/test"
+               }
 PACKAGE_DATA = {}
 
 # add new modules here
@@ -41,7 +44,10 @@ ADD_PACKAGES = [
   "demosaicing",
   "activations",
   "pad",
+  "averagepooling",
+  "maxpooling",
   "warp",
+  "scale"
 ]
 
 for pkg in ADD_PACKAGES:
@@ -51,9 +57,9 @@ for pkg in ADD_PACKAGES:
 
 setuptools.setup(
     name='optotf',
-    version='0.2.0',
-    author="Erich Kobler, Markus Hofinger, Kerstin Hamernik",
-    author_email="erich.kobler@icg.tugraz.at, markus.hofinger@icg.tugraz.at, k.hammernik@imperial.ac.uk",
+    version='0.3.0',
+    author="Erich Kobler, Markus Hofinger, Kerstin Hammernik, Thomas Kuestner",
+    author_email="erich.kobler@icg.tugraz.at, markus.hofinger@icg.tugraz.at, k.hammernik@imperial.ac.uk, thomas.kuestner@med.uni-tuebingen.de",
     description="TensorFlow wrappers for optoX library",
     # package_dir={"optotf": os.path.join(".", "optotf"),},
     platform=distutils.util.get_platform(),

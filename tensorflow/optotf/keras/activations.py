@@ -1,6 +1,5 @@
 import tensorflow as tf
 import optotf.activations
-import unittest
 import numpy as np
 
 class TrainableActivationInitializer(tf.keras.initializers.Initializer):
@@ -85,13 +84,3 @@ class TrainableActivation(tf.keras.layers.Layer):
         s = "num_channels={num_channels}, num_weights={num_weights}, type={base_type}, vmin={vmin}, vmax={vmax}, init={init}, init_scale={init_scale}"
         s += " group={group}"
         return s.format(**self.__dict__)
-
-class TestActivations(unittest.TestCase):
-    def test(self):
-        x = np.random.normal((10, 5))
-        op = TrainableActivation(-0.5, 0.5, 31)
-        y = op(x)
-        self.assertTrue(x.shape == y.shape)
-        
-if __name__ == "__main__":
-    unittest.test()

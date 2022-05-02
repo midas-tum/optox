@@ -1,5 +1,5 @@
-///@file tf_pad2d_operator.h
-///@brief Tensorflow wrappers for nabla operator
+///@file tf_pad_operator.cpp
+///@brief Tensorflow wrappers for pad operator
 ///@author Kerstin Hammernik <k.hammernik@imperial.ac.uk>
 ///@date 06.2020
 
@@ -27,6 +27,210 @@ using shape_inference::UnchangedShape;
 
 using CPUDevice = Eigen::ThreadPoolDevice;
 using GPUDevice = Eigen::GpuDevice;
+
+
+Status TPad1dShapeFn(InferenceContext* c, bool Transpose) {
+/* Source of the InferenceContext, etc.
+https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/framework/shape_inference.h
+  More complete usage examples:
+  https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/ops/array_ops.cc
+*/
+  // Get the padding size => handed over as attribute
+  int left, right;
+  c->GetAttr("left", &left);
+  c->GetAttr("right", &right);
+
+  // Get the padding size => handed over as first input
+  ShapeHandle input = c->input(0);
+
+/*  printf ("pad %i  \n", pad);
+  fflush(stdout);*/
+
+  // create Dimension Handle to store output dimensions
+  std::vector<DimensionHandle> dims(2);
+  // Safety Check => Input dimensionality must be of rank 2
+  TF_RETURN_IF_ERROR( c->WithRank(input, 2, &input));
+
+  // c->input(idx)  => returns the ShapeHandle for the specified input
+  // c->Dim (ShapeHandle, idx)  => returns the size of the dimension as  DimensionHandle 
+  //     =>  c->Dim( c->input(0) , 2 )  => will return the 2nd Dimension from the first input
+  // c->Add (DimensionHandle first, DimensionOrConstant second, DimensionHandle* out)  => returns a Status
+  TF_RETURN_IF_ERROR( c->Add( c->Dim( input, 0), 0, &dims[0]) );
+
+  auto in_dim_x = c->Dim( input, 1);
+
+  // if the value is known => do a check at graph build time, else at runtime
+  if ( c->ValueKnown(in_dim_x))   {
+    //std::cout << "in_dim_y= " << c->Value(in_dim_x)  << ",in_dim_x= " << c->Value(in_dim_x) << ", pad= " << pad;
+    if (Transpose){
+      if ( !( c->Value(in_dim_x)  >= 1.5 * (left + right))) {
+        // for a given padding size a minimum image size is required => throw error if not satisfied
+        TF_RETURN_IF_ERROR(
+          errors::InvalidArgument("PaddingTranspose: The image needs to be bigger than 1.5x (pad0+pad1) (pad0+img+pad1)! But pad is ",
+                                   left,",",right,",",
+                                   " and x =",c->ValueKnown(in_dim_x)));
+      }
+    }
+    else{
+      if ( !(c->Value(in_dim_x) >= (left + right))) {
+        // for a given padding size a minimum image size is required => throw error if not satisfied
+        TF_RETURN_IF_ERROR(
+          errors::InvalidArgument("Padding: The Image needs to be bigger than padding! But pad is ",
+                                   left,",",right,",",
+                                   " and x =",c->ValueKnown(in_dim_x) ));
+      }
+    }
+  }
+
+
+  if (Transpose){
+    TF_RETURN_IF_ERROR( c->Subtract( c->Dim( input, 1), (left + right) , &dims[1]) );
+  }
+  else{   
+    TF_RETURN_IF_ERROR( c->Add( c->Dim( input, 1), (left + right) , &dims[1]) );
+  }
+
+
+  c->set_output(0, c->MakeShape(dims));
+  return Status::OK();
+}
+
+Status Pad1dShapeFn(InferenceContext* c) {
+  return TPad1dShapeFn (c , false);
+}
+
+Status Pad1dTransposeShapeFn(InferenceContext* c) {
+  return TPad1dShapeFn (c , true);
+}
+
+/**
+ * register the operation with necessary options
+ */
+REGISTER_OP("Pad1d")
+		.Input("x: T")
+		.Output("padded_x: T")
+		.Attr("T: {float32, float64}")
+    .Attr("mode: {'symmetric','reflect','replicate'}")
+    .Attr("left: int >= 0")
+    .Attr("right: int >= 0")
+		.SetShapeFn(Pad1dShapeFn);
+
+REGISTER_OP("Pad1dTranspose")
+		.Input("padded_x: T")
+		.Output("x: T")
+		.Attr("T: {float32, float64}")
+    .Attr("mode: {'symmetric','reflect','replicate'}")
+    .Attr("left: int >= 0")
+    .Attr("right: int >= 0")
+		.SetShapeFn(Pad1dTransposeShapeFn);
+
+template <typename T>
+class TFPad1dOperator : public OpKernel {
+public:
+	
+	explicit TFPad1dOperator(OpKernelConstruction* context) 
+		: OpKernel(context)
+	{
+        // Get attributes
+        OP_REQUIRES_OK(context, context->GetAttr("left", &left_));
+        OP_REQUIRES_OK(context, context->GetAttr("right", &right_));
+        OP_REQUIRES_OK(context, context->GetAttr("mode", &mode_));
+    }
+
+	void Compute(OpKernelContext* context) override {
+		// Grab the input tensor
+		const Tensor& x_tensor = context->input(0);
+
+		TensorShape output_shape = x_tensor.shape();
+    output_shape.set_dim(1, output_shape.dim_size(1) + left_ + right_);
+
+		// allocate the output
+		Tensor* output_tensor = nullptr;
+		OP_REQUIRES_OK(context,
+			context->allocate_output(0, output_shape, &output_tensor));
+
+		// compute the output
+		auto input = getDTensorTensorflow<T, 2>(x_tensor);
+		auto output = getDTensorTensorflow<T, 2>(*output_tensor);
+		
+		optox::Pad1dOperator<T> op(left_, right_, mode_);
+		op.setStream(context->eigen_device<GPUDevice>().stream());
+		op.forward({output.get()}, {input.get()});
+	}
+
+     private:
+        int left_;
+        int right_;
+        std::string mode_;
+};
+
+#define REGISTER_GPU(type) \
+	REGISTER_KERNEL_BUILDER( \
+		Name("Pad1d") \
+		.Device(DEVICE_GPU) \
+		.TypeConstraint<type>("T"), \
+		TFPad1dOperator<type>) \
+
+REGISTER_GPU(float);
+REGISTER_GPU(double);
+
+
+#undef REGISTER_GPU
+
+
+template <typename T>
+class TFPad1dTransposeOperator : public OpKernel {
+public:
+	
+	explicit TFPad1dTransposeOperator(OpKernelConstruction* context) 
+		: OpKernel(context)
+	{
+        // Get attributes
+        OP_REQUIRES_OK(context, context->GetAttr("left", &left_));
+        OP_REQUIRES_OK(context, context->GetAttr("right", &right_));
+        OP_REQUIRES_OK(context, context->GetAttr("mode", &mode_));
+    }
+
+	void Compute(OpKernelContext* context) override {
+		// Grab the input tensor
+		const Tensor& x_tensor = context->input(0);
+
+		TensorShape output_shape = x_tensor.shape();
+
+    output_shape.set_dim(1, output_shape.dim_size(1) - left_ - right_);
+
+		// allocate the output
+		Tensor* output_tensor = nullptr;
+		OP_REQUIRES_OK(context,
+			context->allocate_output(0, output_shape, &output_tensor));
+
+		// compute the output
+		auto input = getDTensorTensorflow<T, 2>(x_tensor);
+		auto output = getDTensorTensorflow<T, 2>(*output_tensor);
+		
+		optox::Pad1dOperator<T> op(left_, right_, mode_);
+		op.setStream(context->eigen_device<GPUDevice>().stream());
+		op.adjoint({output.get()}, {input.get()});
+	}
+
+     private:
+        int left_;
+        int right_;
+        std::string mode_;
+};
+
+#define REGISTER_GPU(type) \
+	REGISTER_KERNEL_BUILDER( \
+		Name("Pad1dTranspose") \
+		.Device(DEVICE_GPU) \
+		.TypeConstraint<type>("T"), \
+		TFPad1dTransposeOperator<type>) \
+
+REGISTER_GPU(float);
+REGISTER_GPU(double);
+
+#undef REGISTER_GPU
+
 
 Status TPad2dShapeFn(InferenceContext* c, bool Transpose) {
 /* Source of the InferenceContext, etc.
@@ -118,22 +322,22 @@ REGISTER_OP("Pad2d")
 		.Input("x: T")
 		.Output("padded_x: T")
 		.Attr("T: {float32, float64}")
-        .Attr("mode: {'symmetric','reflect','replicate'}")
-        .Attr("left: int >= 0")
-        .Attr("right: int >= 0")
-        .Attr("top: int >= 0")
-        .Attr("bottom: int >= 0")
+    .Attr("mode: {'symmetric','reflect','replicate'}")
+    .Attr("left: int >= 0")
+    .Attr("right: int >= 0")
+    .Attr("top: int >= 0")
+    .Attr("bottom: int >= 0")
 		.SetShapeFn(Pad2dShapeFn);
 
 REGISTER_OP("Pad2dTranspose")
 		.Input("padded_x: T")
 		.Output("x: T")
 		.Attr("T: {float32, float64}")
-        .Attr("mode: {'symmetric','reflect','replicate'}")
-        .Attr("left: int >= 0")
-        .Attr("right: int >= 0")
-        .Attr("top: int >= 0")
-        .Attr("bottom: int >= 0")
+    .Attr("mode: {'symmetric','reflect','replicate'}")
+    .Attr("left: int >= 0")
+    .Attr("right: int >= 0")
+    .Attr("top: int >= 0")
+    .Attr("bottom: int >= 0")
 		.SetShapeFn(Pad2dTransposeShapeFn);
 
 template <typename T>
@@ -355,26 +559,26 @@ REGISTER_OP("Pad3d")
 		.Input("x: T")
 		.Output("padded_x: T")
 		.Attr("T: {float32, float64}")
-        .Attr("mode: {'symmetric','reflect','replicate'}")
-        .Attr("left: int >= 0")
-        .Attr("right: int >= 0")
-        .Attr("top: int >= 0")
-        .Attr("bottom: int >= 0")
-        .Attr("front: int >= 0")
-        .Attr("back: int >= 0")
+    .Attr("mode: {'symmetric','reflect','replicate'}")
+    .Attr("left: int >= 0")
+    .Attr("right: int >= 0")
+    .Attr("top: int >= 0")
+    .Attr("bottom: int >= 0")
+    .Attr("front: int >= 0")
+    .Attr("back: int >= 0")
 		.SetShapeFn(Pad3dShapeFn);
 
 REGISTER_OP("Pad3dTranspose")
 		.Input("padded_x: T")
 		.Output("x: T")
 		.Attr("T: {float32, float64}")
-        .Attr("mode: {'symmetric','reflect','replicate'}")
-        .Attr("left: int >= 0")
-        .Attr("right: int >= 0")
-        .Attr("top: int >= 0")
-        .Attr("bottom: int >= 0")
-        .Attr("front: int >= 0")
-        .Attr("back: int >= 0")
+    .Attr("mode: {'symmetric','reflect','replicate'}")
+    .Attr("left: int >= 0")
+    .Attr("right: int >= 0")
+    .Attr("top: int >= 0")
+    .Attr("bottom: int >= 0")
+    .Attr("front: int >= 0")
+    .Attr("back: int >= 0")
 		.SetShapeFn(Pad3dTransposeShapeFn);
 
 template <typename T>

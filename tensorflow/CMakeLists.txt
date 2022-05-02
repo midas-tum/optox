@@ -13,7 +13,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 ##----------------------------------------------------------------------------
 ## get python
 ##----------------------------------------------------------------------------
-find_program(PYTHON "python")
+find_program(PYTHON "python3")
 message(STATUS "python: ${PYTHON}")
 
 ##----------------------------------------------------------------------------
@@ -67,7 +67,10 @@ finish_tensorflow_lib(nabla)
 finish_tensorflow_lib(demosaicing)
 finish_tensorflow_lib(activations)
 finish_tensorflow_lib(pad)
+finish_tensorflow_lib(averagepooling)
+finish_tensorflow_lib(maxpooling)
 finish_tensorflow_lib(warp)
+finish_tensorflow_lib(scale)
 
 ##----------------------------------------------------------------------------
 ## packageing using python setup

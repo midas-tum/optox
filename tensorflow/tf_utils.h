@@ -10,18 +10,43 @@
 #include "tensor/h_tensor.h"
 #include "tensor/d_tensor.h"
 #include "typetraits.h"
-#include <complex>
+#include "tensorflow/core/framework/register_types.h"
+
+namespace optox{
+template<typename PixelType>
+struct OPTOX_DLLAPI tf {};
+
+template<> struct OPTOX_DLLAPI tf<float2>
+{
+    typedef tensorflow::complex64 type;
+};
+
+template<> struct OPTOX_DLLAPI tf<double2>
+{
+    typedef tensorflow::complex128 type;
+};
+
+template<> struct OPTOX_DLLAPI tf<float>
+{
+    typedef float type;
+};
+
+template<> struct OPTOX_DLLAPI tf<double>
+{
+    typedef double type;
+};
+}
 
 // wrappers for iu
 template <typename T, unsigned int N>
 std::unique_ptr<optox::DTensor<T, N>> getDTensorTensorflow(tensorflow::Tensor &tensor)
 {
-    auto t_tensor = tensor.tensor<T, N>();
+    auto t_tensor = tensor.tensor<typename optox::tf<T>::type, N>();
     // wrap the Tensor into a device tensor
     optox::Shape<N> size;
     for (unsigned int i = 0; i < N; ++i)
         size[i] = t_tensor.dimension(i);
-    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(t_tensor.data(), size, true));
+    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(reinterpret_cast<T*>(t_tensor.data()), size, true));
 
     return p;
 }
@@ -43,12 +68,12 @@ std::unique_ptr<optox::DTensor<T, N>> getComplexDTensorTensorflow(tensorflow::Te
 template <typename T, unsigned int N>
 std::unique_ptr<optox::DTensor<T, N>> getDTensorTensorflow(const tensorflow::Tensor &tensor)
 {
-    auto t_tensor = tensor.tensor<T, N>();
+    auto t_tensor = tensor.tensor<typename optox::tf<T>::type, N>();
     // wrap the Tensor into a device tensor
     optox::Shape<N> size;
     for (unsigned int i = 0; i < N; ++i)
         size[i] = t_tensor.dimension(i);
-    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(const_cast<T*>(t_tensor.data()), size, true));
+    std::unique_ptr<optox::DTensor<T, N>> p(new optox::DTensor<T, N>(const_cast<T*>(reinterpret_cast<const T*>(t_tensor.data())), size, true));
 
     return p;
 }

@@ -1,9 +1,16 @@
 import numpy as np
-import unittest
 
 import _ext.py_pad_operator
 
-__all__ = ['float_2d', 'double_2d', 'float_3d', 'double_3d']
+__all__ = ['float_1d',
+           'double_1d',
+           'float_2d',
+           'double_2d',
+           'float_3d',
+           'double_3d']
+
+float_1d = _ext.py_pad_operator.Pad1d_float
+double_1d = _ext.py_pad_operator.Pad1d_double
 
 float_2d = _ext.py_pad_operator.Pad2d_float
 double_2d = _ext.py_pad_operator.Pad2d_double
@@ -11,22 +18,35 @@ double_2d = _ext.py_pad_operator.Pad2d_double
 float_3d = _ext.py_pad_operator.Pad3d_float
 double_3d = _ext.py_pad_operator.Pad3d_double
 
-class Pad2d(object):
-    def __init__(self, padding, mode):
+class _Pad(object):
+    def __init__(self, dim, padding, mode):
+        assert dim in [1, 2, 3]
         self.padding = padding
         self.mode = mode
+        self.dim = dim
 
     def _get_op(self, dtype):
-        if dtype == np.float32 or dtype == np.complex64:
-            return float_2d(*self.padding, self.mode) 
-        elif dtype == np.float64 or dtype == np.complex128:
-            return double_2d(*self.padding, self.mode) 
+        assert dtype in [np.float32, np.complex64, np.float64, np.complex128]
+        is_double = dtype in [np.float64, np.complex128]
+
+        if self.dim == 1 and not is_double:
+            return float_1d(*self.padding, self.mode)
+        elif self.dim == 1 and is_double:
+            return double_1d(*self.padding, self.mode)
+        elif self.dim == 2 and not is_double:
+            return float_2d(*self.padding, self.mode)
+        elif self.dim == 2 and is_double:
+            return double_2d(*self.padding, self.mode)
+        elif self.dim == 3 and not is_double:
+            return float_3d(*self.padding, self.mode)
+        elif self.dim == 3 and is_double:
+            return double_3d(*self.padding, self.mode)
         else:
             raise RuntimeError('Invalid dtype!')
 
     def forward(self, x):
         op = self._get_op(x.dtype)
-        
+
         if np.iscomplexobj(x):
             x_re = np.ascontiguousarray(np.real(x))
             x_im = np.ascontiguousarray(np.imag(x))
@@ -36,7 +56,7 @@ class Pad2d(object):
 
     def adjoint(self, x):
         op = self._get_op(x.dtype)
-        
+
         if np.iscomplexobj(x):
             x_re = np.ascontiguousarray(np.real(x))
             x_im = np.ascontiguousarray(np.imag(x))
@@ -44,179 +64,14 @@ class Pad2d(object):
         else:
             return op.adjoint(x)
 
-class Pad3d(Pad2d):
-    def _get_op(self, dtype):
-        if dtype == np.float32 or dtype == np.complex64:
-            return float_3d(*self.padding, self.mode) 
-        elif dtype == np.float64 or dtype == np.complex128:
-            return double_3d(*self.padding, self.mode) 
-        else:
-            raise RuntimeError('Invalid dtype!')
+class Pad1d(_Pad):
+    def __init__(self, padding, mode):
+        super().__init__(1, padding, mode)
 
-# to run execute: python -m unittest [-v] optopy.nabla
-class TestPad2dFunction(unittest.TestCase):           
-    def _test_adjointness(self, dtype, mode):
-        # get the corresponding operator
-        padding = [3,3,2,2]
-        op = Pad2d(padding, mode)
-        # setup the vaiables
-        shape = [4, 32, 32]
-        np_x = np.random.randn(*shape).astype(dtype)
-        padded_shape = shape
-        padded_shape[1] += padding[2] + padding[3]
-        padded_shape[2] += padding[0] + padding[1]
-        np_p = np.random.randn(*padded_shape).astype(dtype)
+class Pad2d(_Pad):
+    def __init__(self, padding, mode):
+        super().__init__(2, padding, mode)
 
-        np_K_x = op.forward(np_x)
-        np_KT_p = op.adjoint(np_p)
-
-        lhs = (np_K_x * np_p).sum()
-        rhs = (np_x * np_KT_p).sum()
-
-        print('forward: dtype={} mode={} diff: {}'.format(dtype, mode, np.abs(lhs - rhs)))
-        self.assertTrue(np.abs(lhs - rhs) < 1e-3)
-
-    def test_float_symmetric(self):
-        self._test_adjointness(np.float32, 'symmetric')
-
-    def test_float_replicate(self):
-        self._test_adjointness(np.float32, 'replicate')
-    
-    def test_float_reflect(self):
-        self._test_adjointness(np.float32, 'reflect')
-    
-    def test_double_symmetric(self):
-        self._test_adjointness(np.float64, 'symmetric')
-
-    def test_double_replicate(self):
-        self._test_adjointness(np.float64, 'replicate')
-    
-    def test_double_reflect(self):
-        self._test_adjointness(np.float64, 'reflect')
-
-class TestComplexPad2dFunction(unittest.TestCase):           
-    def _test_adjointness(self, dtype, mode):
-        # get the corresponding operator
-        padding = [3,3,2,2]
-        op = Pad2d(padding, mode)
-
-        # setup the vaiables
-        shape = [4, 32, 32]
-        np_x = np.random.randn(*shape).astype(dtype) + 1j * np.random.randn(*shape).astype(dtype)
-        padded_shape = shape
-        padded_shape[1] += padding[2] + padding[3]
-        padded_shape[2] += padding[0] + padding[1]
-        np_p = np.random.randn(*padded_shape).astype(dtype) + 1j * np.random.randn(*padded_shape).astype(dtype)
-
-        np_K_x = op.forward(np_x)
-        np_KT_p = op.adjoint(np_p)
-
-        lhs = (np_K_x * np.conj(np_p)).sum()
-        rhs = (np_x * np.conj(np_KT_p)).sum()
-
-        print('adjoint: dtype={} mode={} diff: {}'.format(dtype, mode, np.abs(lhs - rhs)))
-        self.assertTrue(np.abs(lhs - rhs) < 1e-3)
-
-    def test_float_symmetric(self):
-        self._test_adjointness(np.float32, 'symmetric')
-
-    def test_float_replicate(self):
-        self._test_adjointness(np.float32, 'replicate')
-    
-    def test_float_reflect(self):
-        self._test_adjointness(np.float32, 'reflect')
-    
-    def test_double_symmetric(self):
-        self._test_adjointness(np.float64, 'symmetric')
-
-    def test_double_replicate(self):
-        self._test_adjointness(np.float64, 'replicate')
-    
-    def test_double_reflect(self):
-        self._test_adjointness(np.float64, 'reflect')
-
-class TestPad3dFunction(unittest.TestCase):           
-    def _test_adjointness(self, dtype, mode):
-        # get the corresponding operator
-        padding = [3,3,2,2,1,1]
-        op = Pad3d(padding, mode)
-        # setup the vaiables
-        shape = [4, 32, 32, 32]
-        np_x = np.random.randn(*shape).astype(dtype)
-        padded_shape = shape
-        padded_shape[1] += padding[4] + padding[5]
-        padded_shape[2] += padding[2] + padding[3]
-        padded_shape[3] += padding[0] + padding[1]
-        np_p = np.random.randn(*padded_shape).astype(dtype)
-
-        np_K_x = op.forward(np_x)
-        np_KT_p = op.adjoint(np_p)
-
-        lhs = (np_K_x * np_p).sum()
-        rhs = (np_x * np_KT_p).sum()
-
-        print('forward: dtype={} mode={} diff: {}'.format(dtype, mode, np.abs(lhs - rhs)))
-        self.assertTrue(np.abs(lhs - rhs) < 1e-3)
-
-    def test_float_symmetric(self):
-        self._test_adjointness(np.float32, 'symmetric')
-
-    def test_float_replicate(self):
-        self._test_adjointness(np.float32, 'replicate')
-    
-    def test_float_reflect(self):
-        self._test_adjointness(np.float32, 'reflect')
-    
-    def test_double_symmetric(self):
-        self._test_adjointness(np.float64, 'symmetric')
-
-    def test_double_replicate(self):
-        self._test_adjointness(np.float64, 'replicate')
-    
-    def test_double_reflect(self):
-        self._test_adjointness(np.float64, 'reflect')
-
-class TestComplexPad3dFunction(unittest.TestCase):           
-    def _test_adjointness(self, dtype, mode):
-        # get the corresponding operator
-        padding = [3,3,2,2,1,1]
-        op = Pad3d(padding, mode)
-
-        # setup the vaiables
-        shape = [4, 32, 32, 32]
-        np_x = np.random.randn(*shape).astype(dtype) + 1j * np.random.randn(*shape).astype(dtype)
-        padded_shape = shape
-        padded_shape[1] += padding[4] + padding[5]
-        padded_shape[2] += padding[2] + padding[3]
-        padded_shape[3] += padding[0] + padding[1]
-        np_p = np.random.randn(*padded_shape).astype(dtype) + 1j * np.random.randn(*padded_shape).astype(dtype)
-
-        np_K_x = op.forward(np_x)
-        np_KT_p = op.adjoint(np_p)
-
-        lhs = (np_K_x * np.conj(np_p)).sum()
-        rhs = (np_x * np.conj(np_KT_p)).sum()
-
-        print('adjoint: dtype={} mode={} diff: {}'.format(dtype, mode, np.abs(lhs - rhs)))
-        self.assertTrue(np.abs(lhs - rhs) < 1e-3)
-
-    def test_float_symmetric(self):
-        self._test_adjointness(np.float32, 'symmetric')
-
-    def test_float_replicate(self):
-        self._test_adjointness(np.float32, 'replicate')
-    
-    def test_float_reflect(self):
-        self._test_adjointness(np.float32, 'reflect')
-    
-    def test_double_symmetric(self):
-        self._test_adjointness(np.float64, 'symmetric')
-
-    def test_double_replicate(self):
-        self._test_adjointness(np.float64, 'replicate')
-    
-    def test_double_reflect(self):
-        self._test_adjointness(np.float64, 'reflect')
-
-if __name__ == "__main__":
-    unittest.test()
+class Pad3d(_Pad):
+    def __init__(self, padding, mode):
+        super().__init__(3, padding, mode)

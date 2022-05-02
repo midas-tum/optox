@@ -39,6 +39,120 @@ inline __device__ int getPixel(int x, int width)
     return x_;
 }
 
+template <typename T, optox::PaddingMode M>
+__global__ void pad1d(
+    typename optox::DTensor<T, 2>::Ref out,
+    const typename optox::DTensor<T, 2>::ConstRef in,
+    int left)
+{
+    int x = threadIdx.x + blockIdx.x * blockDim.x;
+    int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x < out.size_[1] && y < out.size_[0])
+    {
+        // compute the corresponding index 
+        const int x_in = getPixel<M>(x - left, in.size_[1]);
+        out(y, x) = in(y, x_in);
+    }
+}
+
+
+template<typename T>
+void optox::Pad1dOperator<T>::computeForward(optox::OperatorOutputVector &&outputs,
+    const optox::OperatorInputVector &inputs)
+{
+    auto x = this->template getInput<T, 2>(0, inputs);
+    auto out = this->template getOutput<T, 2>(0, outputs);
+
+    if (x->size()[0] != out->size()[0] || 
+        x->size()[1]+this->paddingX() != out->size()[1])
+        THROW_OPTOXEXCEPTION("Pad1dOperator: input and output size do not match!");
+
+    dim3 dim_block = dim3(32,32, 1);
+    dim3 dim_grid = dim3(divUp(out->size()[1], dim_block.x),
+                         divUp(out->size()[0], dim_block.y),
+                         1);
+ 
+    switch (mode_)
+    {
+        case optox::PaddingMode::symmetric:
+            pad1d<T, optox::PaddingMode::symmetric> <<<dim_grid, dim_block, 0, this->stream_>>>(*out, *x, 
+                this->left_);
+            break;
+        case optox::PaddingMode::reflect:
+            pad1d<T, optox::PaddingMode::reflect> <<<dim_grid, dim_block, 0, this->stream_>>>(*out, *x, 
+                this->left_);
+            break;
+        case optox::PaddingMode::replicate:
+            pad1d<T, optox::PaddingMode::replicate> <<<dim_grid, dim_block, 0, this->stream_>>>(*out, *x, 
+                this->left_);
+            break;
+    }
+    OPTOX_CUDA_CHECK;
+}
+
+
+template <typename T, optox::PaddingMode M>
+__global__ void pad1d_grad(
+    typename optox::DTensor<T, 2>::Ref grad_in,
+    const typename optox::DTensor<T, 2>::ConstRef grad_out,
+    int left)
+{
+    int x = threadIdx.x + blockIdx.x * blockDim.x;
+    int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    if (x < grad_out.size_[1] && y < grad_out.size_[0])
+    {
+        // compute the corresponding index 
+        const int x_in = getPixel<M>(x - left, grad_in.size_[1]);
+        atomicAdd(&grad_in(y, x_in), grad_out(y, x));
+    }
+}
+
+
+template<typename T>
+void optox::Pad1dOperator<T>::computeAdjoint(optox::OperatorOutputVector &&outputs,
+    const optox::OperatorInputVector &inputs)
+{
+    auto grad_out = this->template getInput<T, 2>(0, inputs);
+
+    auto grad_x = this->template getOutput<T, 2>(0, outputs);
+
+    // clear the weights gradient
+    grad_x->fill(0);
+
+    if (grad_x->size()[0] != grad_out->size()[0] || 
+        grad_x->size()[1]+this->paddingX() != grad_out->size()[1])
+        THROW_OPTOXEXCEPTION("Pad1dOperator-adjoint: input and output size do not match!");
+
+    dim3 dim_block = dim3(32, 32, 1);
+    dim3 dim_grid = dim3(divUp(grad_out->size()[1], dim_block.x),
+                         divUp(grad_out->size()[0], dim_block.y),
+                         1);
+
+    switch (mode_)            
+    {
+        case optox::PaddingMode::symmetric:
+            pad1d_grad<T,optox::PaddingMode::symmetric> <<<dim_grid, dim_block, 0, this->stream_>>>(*grad_x, *grad_out, 
+                this->left_);
+            break;
+        case optox::PaddingMode::reflect:
+            pad1d_grad<T,optox::PaddingMode::reflect> <<<dim_grid, dim_block, 0, this->stream_>>>(*grad_x, *grad_out, 
+                this->left_);
+            break;
+        case optox::PaddingMode::replicate:
+            pad1d_grad<T,optox::PaddingMode::replicate> <<<dim_grid, dim_block, 0, this->stream_>>>(*grad_x, *grad_out, 
+                this->left_);
+            break;
+    }
+    OPTOX_CUDA_CHECK;
+}
+
+#define REGISTER_OP(T) \
+    template class optox::Pad1dOperator<T>;
+
+OPTOX_CALL_REAL_NUMBER_TYPES(REGISTER_OP);
+#undef REGISTER_OP
 
 template <typename T, optox::PaddingMode M>
 __global__ void pad2d(
@@ -68,8 +182,8 @@ void optox::Pad2dOperator<T>::computeForward(optox::OperatorOutputVector &&outpu
     auto out = this->template getOutput<T, 3>(0, outputs);
 
     if (x->size()[0] != out->size()[0] || 
-        x->size()[1]+this->top_+this->bottom_ != out->size()[1]||
-        x->size()[2]+this->left_+this->right_ != out->size()[2])
+        x->size()[1]+this->paddingY() != out->size()[1]||
+        x->size()[2]+this->paddingX() != out->size()[2])
         THROW_OPTOXEXCEPTION("Pad2dOperator: input and output size do not match!");
 
     dim3 dim_block = dim3(32, 32, 1);
@@ -128,8 +242,8 @@ void optox::Pad2dOperator<T>::computeAdjoint(optox::OperatorOutputVector &&outpu
     grad_x->fill(0);
 
     if (grad_x->size()[0] != grad_out->size()[0] || 
-        grad_x->size()[1]+this->top_+this->bottom_ != grad_out->size()[1]||
-        grad_x->size()[2]+this->left_+this->right_ != grad_out->size()[2])
+        grad_x->size()[1]+this->paddingY() != grad_out->size()[1]||
+        grad_x->size()[2]+this->paddingX() != grad_out->size()[2])
         THROW_OPTOXEXCEPTION("Pad2dOperator-adjoint: input and output size do not match!");
 
     dim3 dim_block = dim3(32, 32, 1);

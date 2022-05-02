@@ -17,20 +17,40 @@ find_program(PYTHON "python")
 
 message(STATUS "python: ${PYTHON}")
 
+##-----------------------------------------------------------------------------
+## define macro to finish lib
+##-----------------------------------------------------------------------------
+macro (add_deps_py opname)
+set(DEPS_PY
+    ${DEPS_PY}
+    optopy/${opname}.py
+    py_${opname}_operator.cpp
+)
+endmacro (add_deps_py)
+
+# nabla & nabla2
+add_deps_py(nabla)
+set(DEPS_PY
+    ${DEPS_PY}
+    optopy/nabla2.py
+)
+
+# other
+add_deps_py(warp)
+add_deps_py(pad)
+add_deps_py(maxpooling)
+add_deps_py(averagepooling)
+add_deps_py(scale)
+
 if (PYTHON)
     set(SETUP_PY_IN setup.py.in)
     set(SETUP_PY "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
     set(DEPS_PY
         optopy/__init__.py
         py_utils.h
-        optopy/nabla.py
-	optopy/nabla2.py
-	optopy/warp.py
-	optopy/pad.py
-        py_nabla_operator.cpp
-        py_warp_operator.cpp
-        py_pad_operator.cpp
+        ${DEPS_PY}
     )
+
     set(OUTPUT_PY "${CMAKE_CURRENT_BINARY_DIR}/timestamp")
 
     configure_file(${SETUP_PY_IN} ${SETUP_PY})

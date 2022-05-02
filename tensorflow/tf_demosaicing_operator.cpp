@@ -1,4 +1,4 @@
-///@file tf_demosiaing.cpp
+///@file tf_demosaicing_operator.cpp
 ///@brief tensorflow wrappers for the demosaicing operator
 ///@author Joana Grah <joana.grah@icg.tugraz.at>
 ///@date 09.07.2018

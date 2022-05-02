@@ -42,9 +42,38 @@
 #define __RESTRICT__
 #endif
 
+
+#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
+#else
+__device__ double atomicAdd(double* address, double val)
+{
+    unsigned long long int* address_as_ull =
+                              (unsigned long long int*)address;
+    unsigned long long int old = *address_as_ull, assumed;
+
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
+                               __longlong_as_double(assumed)));
+
+    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+    } while (assumed != old);
+
+    return __longlong_as_double(old);
+}
+#endif
+
 class OpToXException : public std::exception
 {
   public:
+    /** Special constructor.
+     *  
+     * @param msg Exception message
+     * @param file File where exception waw thrown (default: null)
+     * @param function Function where exception was thrown (default: null)
+     * @param line Line where exception was thrown (default: null)
+     */
     OpToXException(const std::string &msg, const char *file = nullptr, const char *function = nullptr, int line = 0) throw() : msg_(msg),
                                                                                                                                file_(file),
                                                                                                                                function_(function),
@@ -60,15 +89,22 @@ class OpToXException : public std::exception
         msg_ = out_msg.str();
     }
 
+    /** Destructor. */
     virtual ~OpToXException() throw()
     {
     }
 
+    /**
+     * @brief Return explanation
+     * 
+     * @return const char* explanation
+     */
     virtual const char *what() const throw()
     {
         return msg_.c_str();
     }
 
+  private:
     std::string msg_;
     std::string file_;
     std::string function_;

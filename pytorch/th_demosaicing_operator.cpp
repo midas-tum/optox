@@ -1,4 +1,4 @@
-///@file th_demosaicing_operator.h
+///@file th_demosaicing_operator.cpp
 ///@brief PyTorch wrappers for demosaicing operator
 ///@author Erich Kobler <erich.kobler@icg.tugraz.at>
 ///@date 04.2019

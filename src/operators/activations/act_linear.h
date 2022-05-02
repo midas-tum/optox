@@ -8,6 +8,10 @@
 namespace optox
 {
 
+/**
+ * @class LinearActOperator
+ * @brief Activation operator based on linear interpolation
+ */
 template <typename T>
 class OPTOX_DLLAPI LinearActOperator : public IActOperator<T>
 {
@@ -22,7 +26,10 @@ class OPTOX_DLLAPI LinearActOperator : public IActOperator<T>
     {
     }
 
+    /** No copies are allowed. */
     LinearActOperator(LinearActOperator const &) = delete;
+    
+    /** No assignments are allowed. */
     void operator=(LinearActOperator const &) = delete;
 
   protected:

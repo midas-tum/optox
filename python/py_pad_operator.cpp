@@ -14,6 +14,38 @@
 namespace py = pybind11;
 
 template<typename T>
+py::array forward1d(optox::Pad1dOperator<T> &op, py::array np_input)
+{
+    // parse the input tensors
+    auto input = getDTensorNp<T, 2>(np_input);
+
+    auto out_size = input->size();
+    out_size[1] += op.paddingX();
+
+    optox::DTensor<T, 2> output(out_size);
+
+    op.forward({&output}, {input.get()});
+
+    return dTensorToNp<T, 2>(output);
+}
+
+template<typename T>
+py::array adjoint1d(optox::Pad1dOperator<T> &op, py::array np_input)
+{
+    // parse the input tensors
+    auto input = getDTensorNp<T, 2>(np_input);
+
+    auto out_size = input->size();
+    out_size[1] -= op.paddingX();
+
+    optox::DTensor<T, 2> output(out_size);
+    
+    op.adjoint({&output}, {input.get()});
+
+    return dTensorToNp<T, 2>(output);
+}
+
+template<typename T>
 py::array forward2d(optox::Pad2dOperator<T> &op, py::array np_input)
 {
     // parse the input tensors
@@ -86,7 +118,13 @@ py::array adjoint3d(optox::Pad3dOperator<T> &op, py::array np_input)
 template<typename T>
 void declare_op(py::module &m, const std::string &typestr)
 {
-    std::string pyclass_name = std::string("Pad2d_") + typestr;
+    std::string pyclass_name = std::string("Pad1d_") + typestr;
+    py::class_<optox::Pad1dOperator<T>>(m, pyclass_name.c_str(), py::buffer_protocol(), py::dynamic_attr())
+    .def(py::init<int, int, const std::string&>())
+    .def("forward", forward1d<T>)
+    .def("adjoint", adjoint1d<T>);
+
+    pyclass_name = std::string("Pad2d_") + typestr;
     py::class_<optox::Pad2dOperator<T>>(m, pyclass_name.c_str(), py::buffer_protocol(), py::dynamic_attr())
     .def(py::init<int, int, int, int, const std::string&>())
     .def("forward", forward2d<T>)

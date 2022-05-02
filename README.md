@@ -20,19 +20,14 @@ The source files are organized as follows:
     +-- tensorflow      : tensorflow wrappers
 
 ## Install instructions
+**We highly recommend to use Cuda 11.1 which runs smoothly with both Pytorch and Tensorflow**
 
 First setup the following environment variables:
-- `COMPUTE_CAPABILITY` with the compute capability of your CUDA-enabled GPU [see here](https://en.wikipedia.org/wiki/CUDA)
-- `CUDA_ROOT_DIR` to point to the NVidia CUDA toolkit (typically `/usr/local/cuda`)
-- `CUDA_SDK_ROOT_DIR` to point to the NVidia CUDA examples (typically `/usr/local/cuda/samples`)
+- `CUDA_BIN_PATH` to point to the NVidia CUDA toolkit (typically `/usr/local/cuda`)
 
 Note that the CUDA version used to build the `optox` library should match the version required by `Tensorflow` and/or `Pytorch`.
-Thus, we recommend building both deep learning frameworks from source.
 
-Install dependencies using `anaconda`:
-- `conda install pybind11` for `Python` wrappers
-
-[Update July 2021] We provide an anaconda environment with `Tensorflow 2.4`, `Pytorch 1.9`, `Cuda 11.1`. The environment `optox` can be created via
+We provide an anaconda environment with `Tensorflow 2.4`, `Pytorch 1.9`, `Cuda 11.1`. The environment `optox` can be created via
 ```
 conda env create -f environment.yml
 ```
@@ -43,6 +38,18 @@ mkdir build
 cd build
 cmake .. 
 make install
+```
+
+### Troubleshooting
+If the default gcc compiler version is >8, you will get a build error. A simple workaround is to call following before the cmake command and with a clean build dir, assuming `gcc-8` and `g++-8` are installed on your system in `/usr/bin/`
+```
+export CC=/usr/bin/gcc-8
+export CXX=/usr/bin/g++-8
+```
+
+If you experience a problem that lcudart library cannot be found, then link build to the location of the CUDA lib64 libraries (typically `<path-to-cuda-lib64> = /usr/local/cuda/lib64`)
+```
+export LDFLAGS=-L<path-to-cuda-lib64>
 ```
 
 ### CUDA sync free build
@@ -67,7 +74,6 @@ cmake .. -DWITH_TENSORFLOW=ON
 ```
 
 Note that multiple combinations are supported.
-
 
 ## Testing
 
@@ -140,3 +146,11 @@ OK
 
 ### `Keras` support
 The keras layers can be found in `optotf.keras.xxx`.
+
+## Unittests
+Unittests can be called as follows:
+```
+python -m unittest discover optotf.test
+python -m unittest discover optoth.test
+python -m unittest discover optopy.test
+```
