@@ -278,10 +278,7 @@ def averagepooling4d(inputs, pool_size=(2, 2, 2, 2), strides=(2, 2, 2, 2), alpha
         for i in range(len(pool_size)):
             effective_filter_size = (pool_size[i] - 1) * dilations_rate[i] + 1
             if mode.lower() == 'valid':
-                if ceil_mode==1:
-                    out_ = math.ceil((input_size[i] + 2*pad[i] - effective_filter_size + strides[i]) / strides[i])
-                else:
-                    out_ = math.floor((input_size[i] + 2*pad[i] - effective_filter_size + strides[i]) / strides[i])
+                out_ = math.floor((input_size[i] + 2*pad[i] - effective_filter_size + strides[i]) / strides[i])
             elif mode.lower() == 'same':
                 out_ = math.ceil(input_size[i] / strides[i])
             else:

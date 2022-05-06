@@ -278,20 +278,16 @@ def grad(op, grad1, grad2, grad3):
 def maxpooling4d(inputs, pool_size=(2, 2, 2, 2), strides=(2, 2, 2, 2), alpha=1, beta=1, channel_first=False,
                  name='maxpooling_4d', dilations_rate=(1, 1, 1, 1), pad=(0, 0, 0, 0), mode='VALID', ceil_mode=True):
     ceil_mode = int(ceil_mode)
-    def calculate_out_size(input_size, pool_size, strides, dilations_rate, mode, pad, ceil_mode):
 
+    def calculate_out_size(input_size, pool_size, strides, dilations_rate, mode, pad, ceil_mode):
         assert (len(input_size) == len(pool_size) == len(strides) == len(dilations_rate))
         out_size = [0] * len(pool_size)
         for i in range(len(pool_size)):
             effective_filter_size = (pool_size[i] - 1) * dilations_rate[i] + 1
             if mode.lower() == 'valid':
-                if ceil_mode==1:
-
-                    out_ = math.ceil((input_size[i] + 2*pad[i] - effective_filter_size + strides[i]) / strides[i])
-                else:
-                    out_ = math.floor((input_size[i] + 2*pad[i] - effective_filter_size + strides[i]) / strides[i])
+                out_ = math.floor((input_size[i] + 2*pad[i] - effective_filter_size + strides[i]) / strides[i])
             elif mode.lower() == 'same':
-                out_ =math.ceil(input_size[i]/ strides[i])
+                out_ = math.ceil(input_size[i]/ strides[i])
             else:
                 raise ValueError("mode must be either valid or same!")
             out_size[i] = out_
@@ -342,7 +338,6 @@ def maxpooling4d(inputs, pool_size=(2, 2, 2, 2), strides=(2, 2, 2, 2), alpha=1, 
         size_out = [batch_, time_out, height_out, width_out, depth_out, channels_]
     else:
         raise ValueError("Input Dimension must be 5 or 6!")
-    print('line347', size_out, out_real.shape)
     out_real, out_imag = tf.reshape(out_real, size_out), tf.reshape(out_imag, size_out)
 
     if channel_first:

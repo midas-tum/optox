@@ -52,13 +52,13 @@ public:
 	if (this->padding_mode_=="VALID" ||this->padding_mode_=="valid"||this->padding_mode_=="Valid")
 	{ int size_out=0;
 	if (this->ceil_mode_==1)
-	{size_out = ceil((size_in + 2 * pad_ - effective_filter_size + stride_) / stride_);}
+	{size_out = ceil((size_in*1.0 + 2 * pad_ - effective_filter_size + stride_) / stride_);}
 	else
 	{size_out = (size_in + 2 * pad_ - effective_filter_size + stride_) / stride_;}
 		return size_out;}
 		
 	else if (this->padding_mode_=="SAME" ||this->padding_mode_=="same"||this->padding_mode_=="Same")
-	{int size_out = ceil(size_in / stride_);
+	{int size_out = ceil(size_in*1.0 / stride_);
 		return size_out;}
 	else return 0;
 
@@ -211,13 +211,13 @@ public:
 	if (this->padding_mode_=="VALID" ||this->padding_mode_=="valid"||this->padding_mode_=="Valid")
 	{ int size_out=0;
 	if (this->ceil_mode_==1)
-	{size_out = ceil((size_in + 2 * pad_ - effective_filter_size + stride_) / stride_);}
+	{size_out = ceil((size_in*1.0+ 2 * pad_ - effective_filter_size + stride_) / stride_);}
 	else
 	{size_out = (size_in + 2 * pad_ - effective_filter_size + stride_) / stride_;}
 		return size_out;}
 		
 	else if (this->padding_mode_=="SAME" ||this->padding_mode_=="same"||this->padding_mode_=="Same")
-	{int size_out = ceil(size_in / stride_);
+	{int size_out = ceil(size_in*1.0/ stride_);
 		return size_out;}
 	else return 0;
 
@@ -392,13 +392,13 @@ public:
 	if (this->padding_mode_=="VALID" ||this->padding_mode_=="valid"||this->padding_mode_=="Valid")
 	{ int size_out=0;
 	if (this->ceil_mode_==1)
-	{size_out = ceil((size_in + 2 * pad_ - effective_filter_size + stride_) / stride_);}
+	{size_out = ceil((size_in*1.0 + 2 * pad_ - effective_filter_size + stride_) / stride_);}
 	else
 	{size_out = (size_in + 2 * pad_ - effective_filter_size + stride_) / stride_;}
 		return size_out;}
 		
 	else if (this->padding_mode_=="SAME" ||this->padding_mode_=="same"||this->padding_mode_=="Same")
-	{int size_out = ceil(size_in / stride_);
+	{int size_out = ceil(size_in*1.0 / stride_);
 		return size_out;}
 	else return 0;
 
@@ -601,13 +601,13 @@ public:
 	if (this->padding_mode_=="VALID" ||this->padding_mode_=="valid"||this->padding_mode_=="Valid")
 	{ int size_out=0;
 	if (this->ceil_mode_==1)
-	{size_out = ceil((size_in + 2 * pad_ - effective_filter_size + stride_) / stride_);}
+	{size_out = ceil((size_in*1.0 + 2 * pad_ - effective_filter_size + stride_) / stride_);}
 	else
 	{size_out = (size_in + 2 * pad_ - effective_filter_size + stride_) / stride_;}
 		return size_out;}
 		
 	else if (this->padding_mode_=="SAME" ||this->padding_mode_=="same"||this->padding_mode_=="Same")
-	{int size_out = ceil(size_in / stride_);
+	{int size_out = ceil(size_in*1.0 / stride_);
 		return size_out;}
 	else return 0;
 

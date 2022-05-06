@@ -38,17 +38,14 @@ int getWindowedOutputSize(int input_size, int filter_size,
     }
     int effective_filter_size = (filter_size - 1) *dilation_rate + 1;
     if(padding_mode.compare("VALID")==0){
-int size_out=0;
-	if (ceil_mode==1)
-	{size_out = ceil(input_size + 2 * pad - effective_filter_size + stride) / stride;}
-	else
-	{size_out = (input_size + 2 * pad - effective_filter_size + stride) / stride;}
+
+	int size_out = (input_size + 2 * pad - effective_filter_size + stride) / stride;
 	return size_out;
             }
 
     else if(padding_mode.compare("SAME")==0){
             /*SAME */
-		int  size_out= ceil( input_size / stride);
+		int  size_out= ceil( input_size*1.0 / stride);
 		return size_out;
             
     }
