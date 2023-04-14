@@ -12,6 +12,14 @@ optopy.test.test\_averagepooling module
    :undoc-members:
    :show-inheritance:
 
+optopy.test.test\_gpunufft module
+---------------------------------
+
+.. automodule:: optopy.test.test_gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 optopy.test.test\_maxpooling module
 -----------------------------------
 

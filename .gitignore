@@ -27,7 +27,6 @@ install_manifest.txt
 __pycache__*/
 dist*/
 *.egg-info*/
-*.sh
 
 
 ##################
@@ -159,3 +158,5 @@ include/ndarray_exports.h
 Default/
 
 .idea/
+
+gpuNUFFT

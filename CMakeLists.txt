@@ -4,7 +4,7 @@
 
 project(optoX)
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 ##----------------------------------------------------------------------------
 ## CMake definitions
@@ -18,6 +18,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+#set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY TRUE) 
 
 ##-----------------------------------------------------------------------------
 # CUDA
@@ -43,6 +44,20 @@ message(STATUS "CUDA_SDK_ROOT_DIR: ${CUDA_SDK_ROOT_DIR}")
 include(${CMAKE_CURRENT_LIST_DIR}/settings.cmake)
 set(ENV{LDFLAGS} -L${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 message(STATUS "LDFLAGS = $ENV{LDFLAGS}")
+
+##-----------------------------------------------------------------------------
+## gpuNUFFT
+##-----------------------------------------------------------------------------
+option(WITH_GPUNUFFT "Use gpuNUFFT for non-uniform MRI operator. Requires GPUNUFFT_ROOT to be set." OFF)
+message(STATUS "WITH_GPUNUFFT... ${WITH_GPUNUFFT}")
+
+if(WITH_GPUNUFFT)
+    message(STATUS "Use gpuNUFFT (required for non-uniform MRI operator)")
+    find_package(GPUNUFFT REQUIRED)
+    include_directories(${GPUNUFFT_INCLUDE_DIRS})
+else(WITH_GPUNUFFT)
+    message(STATUS "Disable gpuNUFFT (required for non-uniform MRI operator)")
+endif(WITH_GPUNUFFT)
 
 ##-----------------------------------------------------------------------------
 ## sources

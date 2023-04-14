@@ -6,7 +6,12 @@ Optox environment
 
 - Make conda environment: ``conda env create -f environment.yml``
 - Go to ``build``
-- Run cmake: ``cmake ..``
+- Configure without `gpuNUFFT <https://github.com/khammernik/gpuNUFFT>`_:
+    - Run cmake: ``cmake ..``
+- Configure with `gpuNUFFT <https://github.com/khammernik/gpuNUFFT>`_
+    - Checkout the branch ``cuda_streams`` of the `gpuNUFFT <https://github.com/khammernik/gpuNUFFT>`_ repo.
+    - Follow the guidelines to build `gpuNUFFT <https://github.com/khammernik/gpuNUFFT>`_ and make sure to build in `Release` mode
+    - To configure ``optox`` with `gpuNUFFT <https://github.com/khammernik/gpuNUFFT>`_, run ``cmake .. -DWITH_GPUNUFFT=ON``
 - Compile: ``make -j``
 - Install: ``make install``
 

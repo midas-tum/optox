@@ -10,6 +10,7 @@ Subpackages
    optotf.activations
    optotf.averagepooling
    optotf.demosaicing
+   optotf.gpunufft
    optotf.keras
    optotf.maxpooling
    optotf.nabla

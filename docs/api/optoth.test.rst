@@ -28,6 +28,14 @@ optoth.test.test\_demosaicing module
    :undoc-members:
    :show-inheritance:
 
+optoth.test.test\_gpunufft module
+---------------------------------
+
+.. automodule:: optoth.test.test_gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 optoth.test.test\_maxpooling module
 -----------------------------------
 

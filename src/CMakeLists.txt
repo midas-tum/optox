@@ -44,6 +44,23 @@ set(OPERATOR_SOURCE
     operators/scale_operator.cu
 )
 
+if(WITH_GPUNUFFT)
+    set(COMMON_HEADER
+        ${COMMON_HEADER}
+        typetraits.h
+    )
+
+    set(OPERATOR_HEADER
+        ${OPERATOR_HEADER}
+        operators/gpunufft_operator.h
+    )
+
+    set(OPERATOR_SOURCE
+        ${OPERATOR_SOURCE}
+        operators/gpunufft_operator.cu
+    )
+endif(WITH_GPUNUFFT)
+
 set(HEADERS
     ${COMMON_HEADER}
     ${OPERATOR_HEADER}
@@ -60,3 +77,7 @@ set(SOURCES
 ##-----------------------------------------------------------------------------
 cuda_add_library(optox SHARED ${HEADERS} ${SOURCES} OPTIONS "-DOPTOX_EXPORTS")
 set_target_properties(optox PROPERTIES DEFINE_SYMBOL OPTOX_EXPORTS)
+
+if(WITH_GPUNUFFT)
+    target_link_libraries(optox ${GPUNUFFT_LIBRARIES})
+endif(WITH_GPUNUFFT)

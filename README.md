@@ -20,7 +20,20 @@ The source files are organized as follows:
     +-- tensorflow      : tensorflow wrappers
 
 ## Install instructions
-**We highly recommend to use Cuda 11.1 which runs smoothly with both Pytorch and Tensorflow**
+### Automatic installation
+We provide a python installation script. To build the respective packages for python, pytorch and tensorflow, simply add the flags `--python`, `--pytorch`, `--tensorflow`.
+To build optox with [gpuNUFFT](https://github.com/khammernik/gpuNUFFT/tree/cuda_streams), you only need to add the flag `--gpunufft`.
+```
+git clone https://github.com/midas-tum/optox.git
+cd optox
+# build all
+python install.py --python --pytorch --tensorflow --gpunufft
+# build only with pytorch support
+python install.py --pytorch
+```
+
+### Manual installation
+**We highly recommend to use Cuda >11.1 which runs smoothly with both Pytorch and Tensorflow**
 
 First setup the following environment variables:
 - `CUDA_BIN_PATH` to point to the NVidia CUDA toolkit (typically `/usr/local/cuda`)
@@ -74,6 +87,23 @@ cmake .. -DWITH_TENSORFLOW=ON
 ```
 
 Note that multiple combinations are supported.
+
+### `gpuNUFFT` wrappers
+`optox` provides python, pytorch and tensorflow/keras wrappers for [khammernik/gpuNUFFT branch cuda_streams](https://github.com/khammernik/gpuNUFFT/tree/cuda_streams). Make sure to build gpuNUFFT in Release mode.
+```
+git clone --branch cuda_streams https://github.com/khammernik/gpuNUFFT.git
+cd gpuNUFFT/CUDA
+mkdir -p build
+cd build
+cmake .. -DGEN_MEX_FILES=OFF -DCMAKE_BUILD_TYPE=Release
+make
+```
+To build them with optox, the `gpuNUFFT` package must be built and the path `GPUNUFFT_ROOT_DIR` (e.g. `GPUNUFFT_ROOT_DIR=~/gpuNUFFT`)
+must be set.
+```
+cmake .. -DWITH_GPUNUFFT=ON
+```
+
 
 ## Testing
 

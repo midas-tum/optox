@@ -29,6 +29,14 @@ optoth.demosaicing module
    :undoc-members:
    :show-inheritance:
 
+optoth.gpunufft module
+----------------------
+
+.. automodule:: optoth.gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 optoth.maxpooling module
 ------------------------
 

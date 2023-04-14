@@ -28,6 +28,14 @@ optotf.keras.demosaicing module
    :undoc-members:
    :show-inheritance:
 
+optotf.keras.gpunufft module
+----------------------------
+
+.. automodule:: optotf.keras.gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 optotf.keras.maxpooling module
 ------------------------------
 

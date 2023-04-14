@@ -52,6 +52,38 @@ optotf.test.test\_demosaicing\_keras module
    :undoc-members:
    :show-inheritance:
 
+optotf.test.test\_gpunufft module
+---------------------------------
+
+.. automodule:: optotf.test.test_gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+optotf.test.test\_gpunufft\_keras module
+----------------------------------------
+
+.. automodule:: optotf.test.test_gpunufft_keras
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+optotf.test.test\_gpunufft module
+---------------------------------
+
+.. automodule:: optotf.test.test_gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+optotf.test.test\_gpunufft\_keras module
+----------------------------------------
+
+.. automodule:: optotf.test.test_gpunufft_keras
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 optotf.test.test\_maxpooling module
 -----------------------------------
 

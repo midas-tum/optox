@@ -143,6 +143,20 @@ Defined in ``operators/demosaicing_operator.h``
     :members:
     :protected-members:
 
+gpuNUFFT
+--------
+Defined in ``operators/gpunufft_operator.h``
+
+.. doxygenclass:: optox::GPUNufftOperator
+    :project: optox
+    :members:
+    :protected-members:
+
+.. doxygenclass:: optox::GPUNufftSingleCoilOperator
+    :project: optox
+    :members:
+    :protected-members:
+
 Maxpooling
 -----------
 

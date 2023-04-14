@@ -114,6 +114,10 @@ add_module("maxpooling")
 add_module("averagepooling")
 add_module("scale")
 
+if ("${WITH_GPUNUFFT}" == "ON"):
+    add_module("gpunufft")
+    add_module("gpunufft_singlecoil")
+
 setup(
     name='optopy',
     version='0.3.0',

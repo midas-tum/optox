@@ -12,5 +12,7 @@ dependencies:
   - wheel
   - pip
   - cudatoolkit=11.0
+  - gcc_linux-64=8.5.0
+  - gxx_linux-64=8.5.0
   - pip:
     - -r requirements.txt

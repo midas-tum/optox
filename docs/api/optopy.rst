@@ -20,6 +20,14 @@ optopy.averagepooling module
    :undoc-members:
    :show-inheritance:
 
+optopy.gpunufft module
+----------------------
+
+.. automodule:: optopy.gpunufft
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 optopy.maxpooling module
 ------------------------
 

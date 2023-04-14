@@ -770,23 +770,4 @@ private:
         
     };
 } 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* namespace optox */

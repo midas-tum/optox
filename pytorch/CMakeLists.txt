@@ -55,6 +55,14 @@ add_deps_th(maxpooling)
 add_deps_th(averagepooling)
 add_deps_th(scale)
 
+if(WITH_GPUNUFFT)
+    add_deps_th(gpunufft)
+    set(DEPS_TH
+    ${DEPS_TH}
+    th_gpunufft_singlecoil_operator.cpp
+)
+ENDIF(WITH_GPUNUFFT)
+
 if (PYTHON)
     set(SETUP_TH_IN setup.py.in)
     set(SETUP_TH "${CMAKE_CURRENT_BINARY_DIR}/setup.py")

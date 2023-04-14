@@ -570,7 +570,7 @@ class Averagepooling4dFunction(torch.autograd.Function):
             [x_input] = transpose_channel_first_last([x_input], dimensions='4d')
         ctx.op = get_operator_4d(dtype, x_input.shape, pool_size=pool_size, strides=strides,
                                  pads=pads, alpha=1, beta=1, dilations_rate=dilations_rate,
-                                 batch=0, mode=padding_mode,ceil_mode=ceil_mode)
+                                 batch=0, mode=padding_mode, ceil_mode=ceil_mode)
         ctx.shape = x_input.shape
         if x_input.dtype == torch.complex64 or x_input.dtype == torch.complex128:
             x_real = x_input.real.contiguous()

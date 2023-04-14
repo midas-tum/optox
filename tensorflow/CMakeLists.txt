@@ -35,7 +35,7 @@ link_directories(${Tensorflow_LIB_DIRS})
 ##-----------------------------------------------------------------------------
 ## compiler flags
 ##-----------------------------------------------------------------------------
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14  -fPIC -O2 -D GOOGLE_CUDA=1 ${Tensorflow_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++17  -fPIC -O2 -D GOOGLE_CUDA=1 ${Tensorflow_FLAGS}")
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --expt-relaxed-constexpr -D GOOGLE_CUDA=1 ${Tensorflow_FLAGS}")
 
 ##-----------------------------------------------------------------------------
@@ -69,6 +69,7 @@ finish_tensorflow_lib(activations)
 finish_tensorflow_lib(pad)
 finish_tensorflow_lib(averagepooling)
 finish_tensorflow_lib(maxpooling)
+finish_tensorflow_lib(gpunufft)
 finish_tensorflow_lib(warp)
 finish_tensorflow_lib(scale)
 
