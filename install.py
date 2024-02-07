@@ -96,7 +96,7 @@ if args.gpunufft:
     os.chdir(str(cwd) + "/gpuNUFFT/CUDA")
     subprocess.run(["mkdir", "-p", "build"])
     os.chdir(str(cwd) + "/gpuNUFFT/CUDA/build")
-    subprocess.run(["cmake", str(cwd), "-DGEN_MEX_FILES=OFF"])
+    subprocess.run(["cmake", str(cwd) + "/gpuNUFFT/CUDA", "-DGEN_MEX_FILES=OFF"])
     subprocess.run(["make"])
     os.chdir(str(cwd))
     cmake_args += ['-DWITH_GPUNUFFT=ON']
